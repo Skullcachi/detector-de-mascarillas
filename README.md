@@ -14,3 +14,7 @@
 <h2>Dependencias a instalar para Test.py</h2>
 <h3>OpenCV</h3>
 <p>pip install opencv-python</p>
+
+<h2>Comandos de Ejecución</h2>
+<p>python train.py</p>
+<p>python test.py</p>
