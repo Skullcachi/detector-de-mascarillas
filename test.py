@@ -4,6 +4,10 @@ from keras.models import load_model
 from playsound import playsound
 import time
 from colorama import Fore, Style
+from datetime import date
+import requests
+
+today = date.today()
 model=load_model("./model2-001.model")
 
 labels_dict={0:'Sin mascarilla',1:'Con mascarilla'}
@@ -15,7 +19,7 @@ def Escaner():
     l = 0
     contador = 0
     # Se importa el archivo de opencv que ayuda en deteccion de rostros
-    classifier = cv2.CascadeClassifier('/home/cristobal/.local/lib/python3.8/site-packages/cv2/data/haarcascade_frontalface_default.xml')
+    classifier = cv2.CascadeClassifier('/home/cris/.local/lib/python3.8/site-packages/cv2/data/haarcascade_frontalface_default.xml')
 
     while True:
         
@@ -69,11 +73,17 @@ def Escaner():
     # Se cierran todas las pestanas abiertas
     cv2.destroyAllWindows()
     porcentaje = (contador / 30)*100
+    d1 = today.strftime("%d/%m/%Y")
     if porcentaje < 60:
+        task = {"userWithMask": 0, "userDate": d1 }
+        resp = requests.post('http://localhost:3000/api/sarscov2/postInsertAnalysis', json=task)
         wavFile = "alarm.wav"
         playsound(wavFile)
         print(Fore.RED + "No utiliza mascarilla")
-        print(Style.RESET_ALL) 
+        print(Style.RESET_ALL)
+    else:
+        task = {"userWithMask": 1, "userDate": d1 }
+        resp = requests.post('http://localhost:3000/api/sarscov2/postInsertAnalysis', json=task)
 
 ifmenu = True
 
