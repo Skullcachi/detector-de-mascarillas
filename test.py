@@ -6,6 +6,10 @@ from colorama import Fore, Style
 from datetime import date
 import requests
 from datetime import datetime
+import boto3
+from botocore.exceptions import NoCredentialsError
+import subir
+
 
 today = date.today()
 model=load_model("./model2-001.model")
@@ -14,6 +18,9 @@ labels_dict={0:'Sin mascarilla',1:'Con mascarilla'}
 color_dict={0:(0,0,255),1:(0,255,0)}
 
 size = 4
+
+
+
 def Escaner():
     webcam = cv2.VideoCapture(0) 
     l = 0
@@ -66,6 +73,7 @@ def Escaner():
             date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             date = date + '.png'
             cv2.imwrite(date,im)
+            exito = subir.upload_to_aws(date, 'emergentes', date)
             key = 27
         # Si se presiona la tecla Esc se termina el loop
         if key == 27: #Tecla Esc
