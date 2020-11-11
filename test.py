@@ -2,10 +2,10 @@ import cv2
 import numpy as np
 from keras.models import load_model
 from playsound import playsound
-import time
 from colorama import Fore, Style
 from datetime import date
 import requests
+from datetime import datetime
 
 today = date.today()
 model=load_model("./model2-001.model")
@@ -63,6 +63,9 @@ def Escaner():
         key = cv2.waitKey(10)
         
         if l == 30:
+            date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            date = date + '.png'
+            cv2.imwrite(date,im)
             key = 27
         # Si se presiona la tecla Esc se termina el loop
         if key == 27: #Tecla Esc
@@ -73,17 +76,17 @@ def Escaner():
     # Se cierran todas las pestanas abiertas
     cv2.destroyAllWindows()
     porcentaje = (contador / 30)*100
-    d1 = today.strftime("%d/%m/%Y")
+    d1 = datetime.now().strftime('%Y-%m-%d')
     if porcentaje < 60:
         task = {"userWithMask": 0, "userDate": d1 }
-        resp = requests.post('http://localhost:3000/api/sarscov2/postInsertAnalysis', json=task)
+        #resp = requests.post('http://ec2-3-84-233-38.compute-1.amazonaws.com:3000/api/sarscov2/postInsertAnalysis', json=task)
         wavFile = "alarm.wav"
         playsound(wavFile)
         print(Fore.RED + "No utiliza mascarilla")
         print(Style.RESET_ALL)
     else:
         task = {"userWithMask": 1, "userDate": d1 }
-        resp = requests.post('http://localhost:3000/api/sarscov2/postInsertAnalysis', json=task)
+        resp = requests.post('http://ec2-3-84-233-38.compute-1.amazonaws.com:3000/api/sarscov2/postInsertAnalysis', json=task)
 
 ifmenu = True
 
