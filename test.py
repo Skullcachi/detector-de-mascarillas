@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import cv2
 import numpy as np
 from keras.models import load_model
@@ -9,14 +10,15 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import NoCredentialsError
 import subir
+import os
 
-
+clear = lambda: os.system('clear')
 today = date.today()
 model=load_model("./model2-001.model")
 
 labels_dict={0:'Sin mascarilla',1:'Con mascarilla'}
 color_dict={0:(0,0,255),1:(0,255,0)}
-
+url = ''
 size = 4
 
 
@@ -57,13 +59,10 @@ def Escaner():
             cv2.rectangle(im,(x,y),(x+w,y+h),color_dict[label],2)
             cv2.rectangle(im,(x,y-40),(x+w,y),color_dict[label],-1)
             cv2.putText(im, labels_dict[label], (x, y-10),cv2.FONT_HERSHEY_SIMPLEX,0.8,(255,255,255),2)
-
+            #De las muestras que se realizan se cuentan las que llevan mascarilla puesta
             if labels_dict[label] == "Con mascarilla":
                 contador = contador + 1
                 
-            #print(labels_dict[label])-
-            #Emitir un sonido de alerta en caso de que no lleve mascarilla CAT
-            #Consumir endpoint para enviar datos de analisis.
         l = l + 1
         # Se muestra la imagen
         cv2.imshow('LIVE',   im)
@@ -74,6 +73,9 @@ def Escaner():
             date = date + '.png'
             cv2.imwrite(date,im)
             exito = subir.upload_to_aws(date, 'emergentes', date)
+            date2 = date.replace(':','%3A')
+            date2 = date2.replace(' ','+')
+            url = 'https://emergentes.s3.amazonaws.com/' + date2
             key = 27
         # Si se presiona la tecla Esc se termina el loop
         if key == 27: #Tecla Esc
@@ -83,22 +85,27 @@ def Escaner():
 
     # Se cierran todas las pestanas abiertas
     cv2.destroyAllWindows()
+    #en base al numero de muestras con mascarilla se calcula el porcentaje sobre la muestra
     porcentaje = (contador / 30)*100
     d1 = datetime.now().strftime('%Y-%m-%d')
     if porcentaje < 60:
-        task = {"userWithMask": 0, "userDate": d1 }
-        #resp = requests.post('http://ec2-3-84-233-38.compute-1.amazonaws.com:3000/api/sarscov2/postInsertAnalysis', json=task)
+        #se decide que sobre el 60% la persona lleva mascarilla
+        task = {"userWithMask": 0, "userDate": d1, 'photoUrl':url}
+        resp = requests.post('http://ec2-3-94-61-173.compute-1.amazonaws.com:3000/api/sarscov2/postInsertAnalysis', json=task)
+        print(resp.status_code)
         wavFile = "alarm.wav"
         playsound(wavFile)
         print(Fore.RED + "No utiliza mascarilla")
         print(Style.RESET_ALL)
     else:
-        task = {"userWithMask": 1, "userDate": d1 }
-        resp = requests.post('http://ec2-3-84-233-38.compute-1.amazonaws.com:3000/api/sarscov2/postInsertAnalysis', json=task)
+        task = {"userWithMask": 1, "userDate": d1, 'photoUrl':url }
+        resp = requests.post('http://ec2-3-94-61-173.compute-1.amazonaws.com:3000/api/sarscov2/postInsertAnalysis', json=task)
+        print(resp.status_code)
 
 ifmenu = True
-
+clear()
 while ifmenu == True:
+
     print("-----------------------------------------------------------------------------------")
     print("Bienvenido al escaner de mascarillas.")
     print("Este escaner tiene diferentes opciones:")

@@ -4,3 +4,4 @@
 Dataset/
 test/
 train/
+.env
